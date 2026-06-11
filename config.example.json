@@ -1,0 +1,14 @@
+{
+  "app_host": "127.0.0.1",
+  "app_port": 8088,
+  "debug": true,
+  "llm_provider": "ollama",
+  "llm_endpoint": "http://127.0.0.1:11434/api/chat",
+  "llm_model": "qwen3:8b",
+  "llm_timeout_seconds": 20,
+  "classifier_min_confidence": 0.62,
+  "auto_approve_read_only": true,
+  "require_approval_for_write": true,
+  "storage_path": "data/audit.json",
+  "knowledge_base_path": "knowledge_base"
+}

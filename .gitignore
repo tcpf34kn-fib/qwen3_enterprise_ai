@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.db-journal
+data/
+server.out
+server.err
+config.local.json
+.env
+.venv/
+

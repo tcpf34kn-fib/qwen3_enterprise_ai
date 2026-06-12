@@ -204,9 +204,10 @@ class WorkflowEngine:
         action = ActionProposal.from_mapping(approval["action"])
         result = self.executor.execute(action)
         verification = self.verifier.verify(task, [action], [result])
+        response_status = "completed" if result.success and verification["status"] == "verified" else verification["status"]
         response = {
             "task_id": task.task_id,
-            "status": "completed" if result.success else "failed",
+            "status": response_status,
             "approval_id": approval_id,
             "executed_action": action.to_dict(),
             "tool_results": [result.to_dict()],
@@ -312,7 +313,7 @@ class WorkflowEngine:
             },
         )
 
-        final_status = "completed" if all(result.success for result in results) else "failed"
+        final_status = "completed" if all(result.success for result in results) and verification["status"] == "verified" else verification["status"]
         return {
             "task_id": task.task_id,
             "status": final_status,
@@ -355,4 +356,3 @@ class WorkflowEngine:
     def _audit(self, task_id: str, event_type: str, payload: dict[str, Any]) -> None:
         self.event_bus.publish(event_type, task_id, payload)
         self.storage.add_audit(task_id, event_type, payload)
-

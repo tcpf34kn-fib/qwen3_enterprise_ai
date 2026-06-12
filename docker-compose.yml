@@ -1,0 +1,13 @@
+services:
+  enterprise-ai:
+    build: .
+    ports:
+      - "8088:8088"
+    environment:
+      ENTERPRISE_AI_CONFIG: /app/config.production.example.json
+      ENTERPRISE_AI_APP_HOST: 0.0.0.0
+    volumes:
+      - ./data:/app/data
+      - ./knowledge_base:/app/knowledge_base:ro
+    restart: unless-stopped
+

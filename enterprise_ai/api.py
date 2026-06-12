@@ -5,6 +5,7 @@ from typing import Any
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from .auth import attach_config, install_auth, require_permission
 from .classifier import TaskClassifier
 from .config import AppConfig, load_config
 from .event_bus import InMemoryEventBus
@@ -12,7 +13,7 @@ from .llm.qwen_client import QwenClient
 from .normalizer import Normalizer
 from .policy import PolicyEngine
 from .rag import LocalRagService
-from .storage import AuditStore
+from .storage import AuditStore, build_audit_store
 from .tools.mock_adapters import build_mock_executor
 from .verifier import ResultVerifier
 from .workflow import ReasoningPlanner, WorkflowEngine
@@ -21,7 +22,9 @@ from .workflow import ReasoningPlanner, WorkflowEngine
 def create_app(config: AppConfig | None = None) -> Flask:
     config = config or load_config()
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, resources={r"/api/*": {"origins": config.cors_origins}})
+    attach_config(app, config)
+    install_auth(app, config)
 
     engine, storage = _build_runtime(config)
 
@@ -36,6 +39,7 @@ def create_app(config: AppConfig | None = None) -> Flask:
         )
 
     @app.route("/api/tasks", methods=["POST"])
+    @require_permission("tasks:write")
     def submit_task() -> Any:
         payload = request.get_json(silent=True) or {}
         result = engine.handle(payload)
@@ -43,11 +47,13 @@ def create_app(config: AppConfig | None = None) -> Flask:
         return jsonify(result), status_code
 
     @app.route("/api/tasks", methods=["GET"])
+    @require_permission("tasks:read")
     def list_tasks() -> Any:
         limit = int(request.args.get("limit", "50"))
         return jsonify({"tasks": storage.list_tasks(limit=limit)})
 
     @app.route("/api/tasks/<task_id>", methods=["GET"])
+    @require_permission("tasks:read")
     def get_task(task_id: str) -> Any:
         task = storage.get_task(task_id)
         if not task:
@@ -55,24 +61,28 @@ def create_app(config: AppConfig | None = None) -> Flask:
         return jsonify(task)
 
     @app.route("/api/audit", methods=["GET"])
+    @require_permission("audit:read")
     def list_audit() -> Any:
         task_id = request.args.get("task_id")
         limit = int(request.args.get("limit", "100"))
         return jsonify({"events": storage.list_audit(task_id=task_id, limit=limit)})
 
     @app.route("/api/approvals", methods=["GET"])
+    @require_permission("approvals:read")
     def list_approvals() -> Any:
         status = request.args.get("status")
         limit = int(request.args.get("limit", "100"))
         return jsonify({"approvals": storage.list_approvals(status=status, limit=limit)})
 
     @app.route("/api/approvals/<approval_id>/approve", methods=["POST"])
+    @require_permission("approvals:write")
     def approve(approval_id: str) -> Any:
         payload = request.get_json(silent=True) or {}
         approved_by = str(payload.get("approved_by") or "api")
         return jsonify(engine.approve_and_execute(approval_id, approved_by=approved_by))
 
     @app.route("/api/approvals/<approval_id>/reject", methods=["POST"])
+    @require_permission("approvals:write")
     def reject(approval_id: str) -> Any:
         payload = request.get_json(silent=True) or {}
         rejected_by = str(payload.get("rejected_by") or "api")
@@ -87,7 +97,7 @@ def create_app(config: AppConfig | None = None) -> Flask:
 
 def _build_runtime(config: AppConfig) -> tuple[WorkflowEngine, AuditStore]:
     qwen = QwenClient(config)
-    storage = AuditStore(config.resolved_storage_path)
+    storage = build_audit_store(config)
     engine = WorkflowEngine(
         config=config,
         normalizer=Normalizer(),
@@ -101,4 +111,3 @@ def _build_runtime(config: AppConfig) -> tuple[WorkflowEngine, AuditStore]:
         event_bus=InMemoryEventBus(),
     )
     return engine, storage
-

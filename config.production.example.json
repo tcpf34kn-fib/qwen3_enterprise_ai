@@ -1,26 +1,28 @@
 {
-  "app_host": "127.0.0.1",
+  "app_host": "0.0.0.0",
   "app_port": 8088,
-  "debug": true,
-  "auth_enabled": false,
+  "debug": false,
+  "auth_enabled": true,
   "api_keys": {
-    "dev-admin-key": "admin"
+    "replace-with-long-random-admin-key": "admin",
+    "replace-with-long-random-operator-key": "operator"
   },
   "role_permissions": {
     "admin": ["*"],
     "operator": ["tasks:read", "tasks:write", "audit:read", "approvals:read", "approvals:write"],
     "viewer": ["tasks:read", "audit:read", "approvals:read"]
   },
-  "ip_allowlist": [],
-  "cors_origins": ["http://127.0.0.1:8088", "http://localhost:8088"],
+  "ip_allowlist": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+  "cors_origins": ["https://ops.example.internal"],
   "llm_provider": "ollama",
-  "llm_endpoint": "http://127.0.0.1:11434/api/chat",
+  "llm_endpoint": "http://ollama:11434/api/chat",
   "llm_model": "qwen3:8b",
   "llm_timeout_seconds": 20,
   "classifier_min_confidence": 0.62,
   "auto_approve_read_only": true,
   "require_approval_for_write": true,
-  "storage_backend": "json",
-  "storage_path": "data/audit.json",
+  "storage_backend": "sqlite",
+  "storage_path": "data/audit.sqlite3",
   "knowledge_base_path": "knowledge_base"
 }
+

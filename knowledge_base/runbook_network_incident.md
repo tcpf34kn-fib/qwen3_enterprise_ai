@@ -1,3 +1,9 @@
+---
+domain: network
+doc_type: runbook
+roles: admin,operator,viewer
+---
+
 # Network Incident Runbook
 
 Use this runbook for alerts such as host down, link down, high packet loss, high CPU, weak optical power, or unstable routing.
@@ -12,4 +18,3 @@ Recommended first checks:
 6. Escalate if the impact is production-wide, customer-facing, or unclear.
 
 Read-only actions should be performed before any remediation. Write actions require approval.
-

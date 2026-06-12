@@ -88,7 +88,14 @@ class AnsibleAdapter(ToolAdapter):
                 tool=self.name,
                 operation=operation,
                 success=True,
-                data={"changed": True, "rollback_id": "mock-rollback-001"},
+                data={
+                    "changed": True,
+                    "rollback_id": "mock-rollback-001",
+                    "post_check": {
+                        "status": "passed",
+                        "checks": ["device reachable", "no critical alert", "mock config state converged"],
+                    },
+                },
             )
         return ToolResult(
             tool=self.name,
@@ -123,4 +130,3 @@ def build_mock_executor() -> ToolExecutor:
         "telegram": NotificationAdapter("telegram"),
     }
     return ToolExecutor(adapters=adapters)
-

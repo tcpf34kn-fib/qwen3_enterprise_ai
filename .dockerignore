@@ -1,0 +1,11 @@
+.git/
+__pycache__/
+*.pyc
+*.pyo
+data/
+server.out
+server.err
+config.local.json
+.env
+.venv/
+

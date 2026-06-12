@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +15,17 @@ class AppConfig:
     app_host: str = "127.0.0.1"
     app_port: int = 8088
     debug: bool = True
+    auth_enabled: bool = False
+    api_keys: dict[str, str] = field(default_factory=lambda: {"dev-admin-key": "admin"})
+    role_permissions: dict[str, list[str]] = field(
+        default_factory=lambda: {
+            "admin": ["*"],
+            "operator": ["tasks:read", "tasks:write", "audit:read", "approvals:read", "approvals:write"],
+            "viewer": ["tasks:read", "audit:read", "approvals:read"],
+        }
+    )
+    ip_allowlist: list[str] = field(default_factory=list)
+    cors_origins: list[str] = field(default_factory=lambda: ["http://127.0.0.1:8088", "http://localhost:8088"])
     llm_provider: str = "ollama"
     llm_endpoint: str = "http://127.0.0.1:11434/api/chat"
     llm_model: str = "qwen3:8b"
@@ -22,7 +33,8 @@ class AppConfig:
     classifier_min_confidence: float = 0.62
     auto_approve_read_only: bool = True
     require_approval_for_write: bool = True
-    storage_path: str = "data/audit.db"
+    storage_backend: str = "json"
+    storage_path: str = "data/audit.json"
     knowledge_base_path: str = "knowledge_base"
 
     def resolve_path(self, value: str) -> str:
@@ -43,6 +55,8 @@ class AppConfig:
 def _coerce_env_value(raw: str, current: Any) -> Any:
     if isinstance(current, bool):
         return raw.strip().lower() in ("1", "true", "yes", "on")
+    if isinstance(current, (dict, list)):
+        return json.loads(raw)
     if isinstance(current, int) and not isinstance(current, bool):
         return int(raw)
     if isinstance(current, float):
@@ -74,4 +88,3 @@ def load_config(path: str | None = None) -> AppConfig:
 
 def _field_names() -> set[str]:
     return {field.name for field in fields(AppConfig)}
-

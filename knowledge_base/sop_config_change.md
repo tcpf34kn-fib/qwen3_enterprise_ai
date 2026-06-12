@@ -1,3 +1,9 @@
+---
+domain: network
+doc_type: sop
+roles: admin,operator
+---
+
 # Configuration Change SOP
 
 Configuration changes must follow policy:
@@ -11,4 +17,3 @@ Configuration changes must follow policy:
 7. Store rollback ID and audit trail.
 
 Never allow an LLM to execute shell commands or device commands directly.
-
